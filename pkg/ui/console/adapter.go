@@ -3,6 +3,7 @@ package console
 import (
 	"fmt"
 	"github.com/jasosa/football_scoring_dashboard/pkg/dashboard"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -65,11 +66,17 @@ func (c *Adapter) print() {
 
 func printGoals(goals []dashboard.Goal) string {
 	sb := strings.Builder{}
+	sort.Sort(sortByPlayer(goals))
+	currPlayer := ""
 	for _, goal := range goals {
-		sb.WriteString(goal.Player)
-		sb.WriteString(" ")
+		if currPlayer != goal.Player {
+			sb.WriteString(goal.Player)
+			sb.WriteString(" ")
+		}
+
 		sb.WriteString(fmt.Sprintf("%d'", goal.Minute))
 		sb.WriteString(" ")
+		currPlayer = goal.Player
 	}
 
 	return strings.TrimSpace(sb.String())

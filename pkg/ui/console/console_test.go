@@ -135,6 +135,7 @@ func TestPrintSucesfullyPrintsMatchInformation(t *testing.T) {
 	consoleAddFirstGoalCmd := "11 'West Germany' Haller"
 	consoleAddSecondGoalCmd := "13 'England' Charlton"
 	consoleAddThirdGoalCmd := "87 'England' Max"
+	consoleAddFourthGoalCmd := "91 'England' Charlton"
 	consolePrintCommand := "print"
 	t.Log("Given the command: ", consolePrintCommand)
 	{
@@ -146,11 +147,12 @@ func TestPrintSucesfullyPrintsMatchInformation(t *testing.T) {
 			adp.Execute(consoleAddFirstGoalCmd)
 			adp.Execute(consoleAddSecondGoalCmd)
 			adp.Execute(consoleAddThirdGoalCmd)
+			adp.Execute(consoleAddFourthGoalCmd)
 			adp.Execute(consolePrintCommand)
 			timeout := time.After(500 * time.Millisecond) //give some time to the goroutine to send the info into the channel
 			select {
 			case message := <-adp.Message: //Print command should put a message into adp.Message channel
-				if message == "England 2 (Charlton 13' Max 87') vs. West Germany 1 (Haller 11')" {
+				if message == "England 3 (Charlton 13' 91' Max 87') vs. West Germany 1 (Haller 11')" {
 					t.Logf("Score information should be printed successfully [OK]")
 				} else {
 					t.Errorf("Score information should be printed successfully, but was %s [Error]", message)
@@ -162,5 +164,9 @@ func TestPrintSucesfullyPrintsMatchInformation(t *testing.T) {
 	}
 }
 
+// End command
+// Errors
 // Add a goal with wrong teams
-// Print command where the same player scores more than one goal
+// Non recognized command
+// Commands in wrong order
+// Before start
