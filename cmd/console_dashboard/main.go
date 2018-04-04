@@ -13,6 +13,8 @@ import (
 	"github.com/jasosa/football_scoring_dashboard/pkg/dashboard"
 	"github.com/jasosa/football_scoring_dashboard/pkg/ui/console"
 	"os"
+	"os/signal"
+	"time"
 )
 
 func main() {
@@ -23,10 +25,21 @@ func main() {
 	fmt.Print(">")
 	scanner := bufio.NewScanner(os.Stdin)
 
-	for scanner.Scan() {
-		cmd := scanner.Text()
-		adp.Execute(cmd, true)
-		fmt.Println(<-adp.Message)
-		fmt.Print(">")
-	}
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	go func() {
+		for scanner.Scan() {
+			cmd := scanner.Text()
+			adp.Execute(cmd, true)
+			fmt.Println(<-adp.Message)
+			fmt.Print(">")
+		}
+	}()
+
+	<-stop
+
+	fmt.Println("Closing Match Dashboard...")
+	time.Sleep(1000)
+	fmt.Println("Match Dashboard closed succesfully!")
 }
