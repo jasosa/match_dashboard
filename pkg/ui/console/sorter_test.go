@@ -14,11 +14,10 @@ func TestSorterByPlayerSortsSuccessfully(t *testing.T) {
 		dashboard.Goal{Player: "Iniesta", Minute: 81, Team: "Spain"},
 	}
 
-	sort.Sort(sortByPlayer(goals))
+	sort.Sort(byPlayer(goals))
 	if goals[0].Player != "Iniesta" || goals[1].Player != "Iniesta" || goals[2].Player != "Iniesta" {
 		t.Errorf("Sort was not working as expected")
 	} else {
 		t.Log("Sort by players working as expected")
 	}
-
 }

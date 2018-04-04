@@ -3,6 +3,7 @@ package dashboard
 //ScoringMatch represents a match in the dashboard
 type ScoringMatch interface {
 	Start(home, away string)
+	End()
 	AddGoal(minute int, team, player string)
 	IsStarted() bool
 	GetHomeTeam() string
@@ -39,6 +40,16 @@ func (sm *scoringMatch) Start(home, away string) {
 	sm.isStarted = true
 	sm.homeTeam = home
 	sm.awayTeam = away
+}
+
+func (sm *scoringMatch) End() {
+	sm.isStarted = false
+	sm.homeTeam = ""
+	sm.awayTeam = ""
+	sm.homeGoals = []Goal{}
+	sm.homeGoals = []Goal{}
+	sm.homeTeamScore = 0
+	sm.awayTeamScore = 0
 }
 
 func (sm *scoringMatch) AddGoal(minute int, team, player string) {

@@ -13,9 +13,13 @@ const (
 
 //ParseCommand returns a Command based in the given command string
 func ParseCommand(command string) (Command, error) {
-	if command == "print" {
+	if command == "Print" {
 		return parsePrintCommand()
 	}
+	if command == "End" {
+		return parseEndCommand()
+	}
+
 	if strings.HasPrefix(command, "Start:") {
 		return parseStartCommand(command)
 	}
@@ -26,6 +30,14 @@ func ParseCommand(command string) (Command, error) {
 func parsePrintCommand() (Command, error) {
 	return Command{
 		Name: "Print",
+		Args: []string{},
+	}, nil
+}
+
+//ParseEndCommand returns end command information
+func parseEndCommand() (Command, error) {
+	return Command{
+		Name: "End",
 		Args: []string{},
 	}, nil
 }

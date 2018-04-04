@@ -14,7 +14,8 @@ func TestMatchDashboardStartsSuccesfully(t *testing.T) {
 		{
 			matchDashboard := dashboard.New()
 			adp := NewAdapter(matchDashboard)
-			adp.Execute(consoleCmd)
+			adp.Execute(consoleCmd, true)
+			<-adp.Message
 			if matchDashboard.IsStarted() {
 				t.Log("The match should be started [OK]")
 			} else {
@@ -34,7 +35,8 @@ func TestWhenMatchStartsTeamsShouldBeSetSuccesfully(t *testing.T) {
 		{
 			matchDashboard := dashboard.New()
 			adp := NewAdapter(matchDashboard)
-			adp.Execute(consoleCmd)
+			adp.Execute(consoleCmd, true)
+			<-adp.Message
 			if matchDashboard.GetHomeTeam() == "England" && matchDashboard.GetAwayTeam() == "West Germany" {
 				t.Log("Home Team should be 'England' and Away Team should be 'West Germany' [OK]")
 			} else {
@@ -55,8 +57,8 @@ func TestWhenMatchIsStartedAGoalCanBeAdded(t *testing.T) {
 		{
 			matchDashboard := dashboard.New()
 			adp := NewAdapter(matchDashboard)
-			adp.Execute(consoleStartCmd)
-			adp.Execute(consoleAddGoalCmd)
+			adp.Execute(consoleStartCmd, false)
+			adp.Execute(consoleAddGoalCmd, false)
 			if matchDashboard.GetHomeTeamScore() == 0 && matchDashboard.GetAwayTeamScore() == 1 {
 				t.Log("Home Team score should be '0' and Away Team score should be '1' [OK]")
 			} else {
@@ -77,8 +79,8 @@ func TestWhenGoalIsScoredInfoIsSetSuccesfully(t *testing.T) {
 		{
 			matchDashboard := dashboard.New()
 			adp := NewAdapter(matchDashboard)
-			adp.Execute(consoleStartCmd)
-			adp.Execute(consoleAddGoalCmd)
+			adp.Execute(consoleStartCmd, false)
+			adp.Execute(consoleAddGoalCmd, false)
 			goals := matchDashboard.GetAwayGoals()
 			expectedPlayer := "Haller"
 			expectedMinute := 11
@@ -112,9 +114,9 @@ func TestWhenTwoGoalsAreScoredInfoIsSetSuccesfully(t *testing.T) {
 		{
 			matchDashboard := dashboard.New()
 			adp := NewAdapter(matchDashboard)
-			adp.Execute(consoleStartCmd)
-			adp.Execute(consoleAddFirstGoalCmd)
-			adp.Execute(consoleAddSecondGoalCmd)
+			adp.Execute(consoleStartCmd, false)
+			adp.Execute(consoleAddFirstGoalCmd, false)
+			adp.Execute(consoleAddSecondGoalCmd, false)
 			homeGoals := matchDashboard.GetHomeGoals()
 			awayGoals := matchDashboard.GetAwayGoals()
 			homeScore := matchDashboard.GetHomeTeamScore()
@@ -136,19 +138,19 @@ func TestPrintSucesfullyPrintsMatchInformation(t *testing.T) {
 	consoleAddSecondGoalCmd := "13 'England' Charlton"
 	consoleAddThirdGoalCmd := "87 'England' Max"
 	consoleAddFourthGoalCmd := "91 'England' Charlton"
-	consolePrintCommand := "print"
+	consolePrintCommand := "Print"
 	t.Log("Given the command: ", consolePrintCommand)
 	{
 		t.Log("When the command is executed into a dashboard with an already started match")
 		{
 			matchDashboard := dashboard.New()
 			adp := NewAdapter(matchDashboard)
-			adp.Execute(consoleStartCmd)
-			adp.Execute(consoleAddFirstGoalCmd)
-			adp.Execute(consoleAddSecondGoalCmd)
-			adp.Execute(consoleAddThirdGoalCmd)
-			adp.Execute(consoleAddFourthGoalCmd)
-			adp.Execute(consolePrintCommand)
+			adp.Execute(consoleStartCmd, false)
+			adp.Execute(consoleAddFirstGoalCmd, false)
+			adp.Execute(consoleAddSecondGoalCmd, false)
+			adp.Execute(consoleAddThirdGoalCmd, false)
+			adp.Execute(consoleAddFourthGoalCmd, false)
+			adp.Execute(consolePrintCommand, true)
 			timeout := time.After(500 * time.Millisecond) //give some time to the goroutine to send the info into the channel
 			select {
 			case message := <-adp.Message: //Print command should put a message into adp.Message channel
@@ -159,6 +161,105 @@ func TestPrintSucesfullyPrintsMatchInformation(t *testing.T) {
 				}
 			case <-timeout:
 				t.Errorf("Score information should be printed before given time [Error]")
+			}
+		}
+	}
+}
+
+func TestCommandWhileMatchNotInProgress(t *testing.T) {
+	expectedMessage := "No game currently in progress"
+	consoleAddFirstGoalCmd := "11 'West Germany' Haller"
+	t.Log("Given the command: ", consoleAddFirstGoalCmd)
+	{
+		t.Log("When the command is executed into a dashboard with NO already started match")
+		{
+			matchDashboard := dashboard.New()
+			adp := NewAdapter(matchDashboard)
+			adp.Execute(consoleAddFirstGoalCmd, true)
+			timeout := time.After(500 * time.Millisecond)
+			select {
+			case message := <-adp.Message:
+				if message != expectedMessage {
+					t.Errorf("The message '%s' should be sent but the message '%s' is received [Error]", expectedMessage, message)
+				} else {
+					t.Logf("The message '%s' should be received [OK]", expectedMessage)
+				}
+			case <-timeout:
+				t.Errorf("The message '%s' should be sent but any message is received [Error]", expectedMessage)
+			}
+		}
+	}
+}
+
+func TestStartAGameWhileCurrentOneIsStarted(t *testing.T) {
+	expectedMessage := "Game currently in progress - to start a new game finish the current one  through typing 'End'"
+	consoleStartFirstCmd := "Start:'England' vs. 'West Germany'"
+	consoleStartSecondCmd := "Start:'Italy' vs. 'Japan'"
+	t.Log("Given the command: ", consoleStartSecondCmd)
+	{
+		t.Log("When the command is executed into a dashboard with an already started match")
+		{
+			matchDashboard := dashboard.New()
+			adp := NewAdapter(matchDashboard)
+			adp.Execute(consoleStartFirstCmd, false)
+			adp.Execute(consoleStartSecondCmd, true)
+			timeout := time.After(500 * time.Millisecond)
+			select {
+			case message := <-adp.Message:
+				if message != expectedMessage {
+					t.Errorf("The message '%s' should be sent but the message '%s' is received [Error]", expectedMessage, message)
+				} else {
+					t.Logf("The message '%s' should be received [OK]", expectedMessage)
+				}
+			case <-timeout:
+				t.Errorf("The message '%s' should be sent but any message is received [Error]", expectedMessage)
+			}
+		}
+	}
+}
+
+func TestEndMatchSuccesfully(t *testing.T) {
+	consoleStartCmd := "Start:'England' vs. 'West Germany'"
+	consoleEndCmd := "End"
+	t.Log("Given the command: ", consoleEndCmd)
+	{
+		t.Log("When the command is executed into a dashboard with an already started match")
+		{
+			matchDashboard := dashboard.New()
+			adp := NewAdapter(matchDashboard)
+			adp.Execute(consoleStartCmd, false)
+			adp.Execute(consoleEndCmd, false)
+			if matchDashboard.IsStarted() {
+				t.Error("Match shouldn't be started anymore [Error]")
+			} else {
+				t.Log("Match shouldn't be started anymore [OK]")
+			}
+		}
+	}
+}
+
+func TestEndMatchSuccesfullySendsRightMessage(t *testing.T) {
+	expectedMessage := "Match ended succesfully"
+	consoleStartCmd := "Start:'England' vs. 'West Germany'"
+	consoleEndCmd := "End"
+	t.Log("Given the command: ", consoleEndCmd)
+	{
+		t.Log("When the command is executed into a dashboard with an already started match")
+		{
+			matchDashboard := dashboard.New()
+			adp := NewAdapter(matchDashboard)
+			adp.Execute(consoleStartCmd, false)
+			adp.Execute(consoleEndCmd, true)
+			timeout := time.After(500 * time.Millisecond)
+			select {
+			case message := <-adp.Message:
+				if message != expectedMessage {
+					t.Errorf("The message '%s' should be sent but the message '%s' is received [Error]", expectedMessage, message)
+				} else {
+					t.Logf("The message '%s' should be received [OK]", expectedMessage)
+				}
+			case <-timeout:
+				t.Errorf("The message '%s' should be sent but any message is received [Error]", expectedMessage)
 			}
 		}
 	}

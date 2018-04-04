@@ -4,11 +4,11 @@ import (
 	"github.com/jasosa/football_scoring_dashboard/pkg/dashboard"
 )
 
-type sortByPlayer []dashboard.Goal
+type byPlayer []dashboard.Goal
 
-func (a sortByPlayer) Len() int      { return len(a) }
-func (a sortByPlayer) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a sortByPlayer) Less(i, j int) bool {
+func (a byPlayer) Len() int      { return len(a) }
+func (a byPlayer) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a byPlayer) Less(i, j int) bool {
 	if a[i].Player == a[j].Player {
 		return a[i].Minute < a[j].Minute
 	}

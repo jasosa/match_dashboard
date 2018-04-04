@@ -37,10 +37,18 @@ func TestParseAddGoalCommand(t *testing.T) {
 }
 
 func TestParsePrintCommand(t *testing.T) {
-	cmd, _ := console.ParseCommand("print")
+	cmd, _ := console.ParseCommand("Print")
 	if cmd.Name != "Print" {
-		t.Errorf("Error parsing print command. Expected command name was %s but is %s", "Print", cmd.Name)
+		t.Errorf("Error parsing 'Print' command. Expected command name was %s but is %s", "Print", cmd.Name)
 	} else if len(cmd.Args) > 0 {
-		t.Errorf("Error parsing print command. Expected number of args was %d but is %d", 0, len(cmd.Args))
+		t.Errorf("Error parsing 'Print' command. Expected number of args was %d but is %d", 0, len(cmd.Args))
+	}
+}
+func TestParseEndCommand(t *testing.T) {
+	cmd, _ := console.ParseCommand("End")
+	if cmd.Name != "End" {
+		t.Errorf("Error parsing 'End' command. Expected command name was %s but is %s", "End", cmd.Name)
+	} else if len(cmd.Args) > 0 {
+		t.Errorf("Error parsing 'End' command. Expected number of args was %d but is %d", 0, len(cmd.Args))
 	}
 }
