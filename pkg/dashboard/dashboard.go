@@ -2,9 +2,9 @@ package dashboard
 
 //ScoringMatch represents a match in the dashboard
 type ScoringMatch interface {
-	Start(home, away string)
-	End()
-	AddGoal(minute int, team, player string)
+	Start(home, away string) error
+	End() error
+	AddGoal(minute int, team, player string) error
 	IsStarted() bool
 	GetHomeTeam() string
 	GetAwayTeam() string
@@ -36,30 +36,47 @@ func New() ScoringMatch {
 	return new(scoringMatch)
 }
 
-func (sm *scoringMatch) Start(home, away string) {
-	sm.isStarted = true
-	sm.homeTeam = home
-	sm.awayTeam = away
-}
-
-func (sm *scoringMatch) End() {
-	sm.isStarted = false
-	sm.homeTeam = ""
-	sm.awayTeam = ""
-	sm.homeGoals = []Goal{}
-	sm.homeGoals = []Goal{}
-	sm.homeTeamScore = 0
-	sm.awayTeamScore = 0
-}
-
-func (sm *scoringMatch) AddGoal(minute int, team, player string) {
-	if team == sm.homeTeam {
-		sm.homeTeamScore++
-		sm.homeGoals = append(sm.homeGoals, Goal{Minute: minute, Team: team, Player: player})
-	} else if team == sm.awayTeam {
-		sm.awayTeamScore++
-		sm.awayGoals = append(sm.awayGoals, Goal{Minute: minute, Team: team, Player: player})
+func (sm *scoringMatch) Start(home, away string) error {
+	if !sm.isStarted {
+		sm.isStarted = true
+		sm.homeTeam = home
+		sm.awayTeam = away
+		return nil
 	}
+
+	return ErrMatchAlreadyStarted
+
+}
+
+func (sm *scoringMatch) End() error {
+	if sm.isStarted {
+		sm.isStarted = false
+		sm.homeTeam = ""
+		sm.awayTeam = ""
+		sm.homeGoals = []Goal{}
+		sm.homeGoals = []Goal{}
+		sm.homeTeamScore = 0
+		sm.awayTeamScore = 0
+		return nil
+	}
+
+	return ErrMatchNotStarted
+}
+
+func (sm *scoringMatch) AddGoal(minute int, team, player string) error {
+	if sm.isStarted {
+		if team == sm.homeTeam {
+			sm.homeTeamScore++
+			sm.homeGoals = append(sm.homeGoals, Goal{Minute: minute, Team: team, Player: player})
+		} else if team == sm.awayTeam {
+			sm.awayTeamScore++
+			sm.awayGoals = append(sm.awayGoals, Goal{Minute: minute, Team: team, Player: player})
+		}
+
+		return nil
+	}
+
+	return ErrMatchNotStarted
 }
 
 func (sm *scoringMatch) IsStarted() bool {

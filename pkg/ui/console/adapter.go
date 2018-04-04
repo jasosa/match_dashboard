@@ -78,42 +78,40 @@ func (c *Adapter) print() {
 }
 
 func (c *Adapter) processStartCommand(cmd Command, messageBack bool) {
-	if !c.match.IsStarted() {
-		c.match.Start(cmd.Args[0], cmd.Args[1])
+	err := c.match.Start(cmd.Args[0], cmd.Args[1])
+	if err == nil {
 		if messageBack {
 			sendMessage(c.Message, "Match started succesfully")
 		}
-	} else {
-		if messageBack {
-			sendMessage(c.Message, MsgGameInProgress)
-		}
+	} else if err == dashboard.ErrMatchAlreadyStarted && messageBack {
+		sendMessage(c.Message, MsgGameInProgress)
+	} else if messageBack {
+		sendMessage(c.Message, err.Error())
 	}
 }
 
 func (c *Adapter) processEndCommand(cmd Command, messageBack bool) {
-	if c.match.IsStarted() {
-		c.match.End()
-		if messageBack {
-			sendMessage(c.Message, "Match ended succesfully")
-		}
-	} else {
-		if messageBack {
-			sendMessage(c.Message, MsNoGameInProgress)
-		}
+
+	err := c.match.End()
+	if err == nil && messageBack {
+		sendMessage(c.Message, "Match ended succesfully")
+	} else if err == dashboard.ErrMatchNotStarted && messageBack {
+		sendMessage(c.Message, MsNoGameInProgress)
+	} else if messageBack {
+		sendMessage(c.Message, err.Error())
 	}
 }
 
 func (c *Adapter) processAddCommand(cmd Command, messageBack bool) {
 	minute, _ := strconv.Atoi(cmd.Args[0])
-	if c.match.IsStarted() {
-		c.match.AddGoal(minute, cmd.Args[1], cmd.Args[2])
-		if messageBack {
-			sendMessage(c.Message, "Goal added succesfully")
-		}
-	} else {
-		if messageBack {
-			sendMessage(c.Message, MsNoGameInProgress)
-		}
+
+	err := c.match.AddGoal(minute, cmd.Args[1], cmd.Args[2])
+	if err == nil && messageBack {
+		sendMessage(c.Message, "Goal added succesfully")
+	} else if err == dashboard.ErrMatchNotStarted && messageBack {
+		sendMessage(c.Message, MsNoGameInProgress)
+	} else if messageBack {
+		sendMessage(c.Message, err.Error())
 	}
 }
 
